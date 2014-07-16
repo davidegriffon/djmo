@@ -3,7 +3,7 @@ dj-model-observer
 
 note: alpha version
 
-This simple django plugin can be useful when you want to monitor what it's saved in your database in your tests.
+Simple Django plugin that provides some goodies useful to know what's happening in your database.
 
 Example usage:
 
@@ -18,4 +18,9 @@ Example usage:
         # then you can test using observer, using for example
         self.observers[User].number_of_objects_created # return 1 (mario)
         self.observers[User].number_of_objects_updated # return 1 (wario)
-        self.observers[User].number_of_objects_delete # return 0
+        self.observers[User].number_of_objects_deleted # return 0
+        self.observers[User].object(mario).is_created # return True
+        self.observers[User].object(mario).is_updated # return False
+        self.observers[User].object(mario).is_deleted # return False
+
+
