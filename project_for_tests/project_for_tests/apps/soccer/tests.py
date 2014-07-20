@@ -1,5 +1,5 @@
-from django.test import TestCase
 from dj_model_observer import observe_models
+from django.test import TestCase
 from .models import SoccerTeam, SoccerPlayer
 
 
@@ -41,6 +41,13 @@ class SoccerTestCase(TestCase):
         self.assertEqual(3, self.observers[SoccerPlayer].number_of_objects_created)
         self.assertEqual(2, self.observers[SoccerPlayer].number_of_objects_updated)
         self.assertEqual(1, self.observers[SoccerPlayer].number_of_objects_deleted)
+        self.assertFalse(self.observers[SoccerPlayer].nothing_has_changed)
+
+    @observe_models(SoccerPlayer)
+    def test_property_observer(self):
+        self.perform_some_actions()
+        self.assertEqual(self.observers[SoccerPlayer], self.observer)
+        self.assertEqual(self.observers[SoccerPlayer], self.soccerplayer_observer)
 
     @observe_models(SoccerPlayer, SoccerTeam)
     def test_multiple_observers(self):
@@ -62,25 +69,47 @@ class SoccerTestCase(TestCase):
 
     @observe_models(SoccerPlayer)
     def test_object_method(self):
+        # only created
         mario_neri = SoccerPlayer.objects.create(team=self.dream_team, first_name='Mario', last_name='Neri')
 
+        # created and updated
         mario_bianchi = SoccerPlayer.objects.create(team=self.dream_team, first_name='Mariooo', last_name='Bianchi')
         mario_bianchi.first_name = 'Mario'
         mario_bianchi.save()
 
+        # updated and then deleted
         mario_rossi = SoccerPlayer.objects.get(first_name='Mario', last_name='Rossi')
         mario_rossi.team = self.empty_team
         mario_rossi.save()
         mario_rossi.delete()
 
+        # untouched
+        mario_verdi = SoccerPlayer.objects.get(first_name='Mario', last_name='Verdi')
+
+        # never saved
+        mario_rosa = SoccerPlayer(first_name='Mario', last_name='Rosa')
+
         self.assertTrue(self.observers[SoccerPlayer].object(mario_neri).is_created)
         self.assertFalse(self.observers[SoccerPlayer].object(mario_neri).is_updated)
         self.assertFalse(self.observers[SoccerPlayer].object(mario_neri).is_deleted)
+        self.assertFalse(self.observers[SoccerPlayer].object(mario_neri).is_untouched)
 
         self.assertTrue(self.observers[SoccerPlayer].object(mario_bianchi).is_created)
         self.assertTrue(self.observers[SoccerPlayer].object(mario_bianchi).is_updated)
         self.assertFalse(self.observers[SoccerPlayer].object(mario_bianchi).is_deleted)
+        self.assertFalse(self.observers[SoccerPlayer].object(mario_bianchi).is_untouched)
 
         self.assertFalse(self.observers[SoccerPlayer].object(mario_rossi).is_created)
         self.assertTrue(self.observers[SoccerPlayer].object(mario_rossi).is_updated)
         self.assertTrue(self.observers[SoccerPlayer].object(mario_rossi).is_deleted)
+        self.assertFalse(self.observers[SoccerPlayer].object(mario_rossi).is_untouched)
+
+        self.assertFalse(self.observers[SoccerPlayer].object(mario_verdi).is_created)
+        self.assertFalse(self.observers[SoccerPlayer].object(mario_verdi).is_updated)
+        self.assertFalse(self.observers[SoccerPlayer].object(mario_verdi).is_deleted)
+        self.assertTrue(self.observers[SoccerPlayer].object(mario_verdi).is_untouched)
+
+        self.assertFalse(self.observers[SoccerPlayer].object(mario_rosa).is_created)
+        self.assertFalse(self.observers[SoccerPlayer].object(mario_rosa).is_updated)
+        self.assertFalse(self.observers[SoccerPlayer].object(mario_rosa).is_deleted)
+        self.assertTrue(self.observers[SoccerPlayer].object(mario_rosa).is_untouched)
