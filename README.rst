@@ -38,10 +38,10 @@ Other example:
         self.observers[User].number_of_objects_updated # returns 1 (wario)
         self.observers[User].number_of_objects_deleted # returns 0
 
-        # you can use `object(model_instance)` method to see what happened to the instance given
-        self.observers[User].object(mario).is_created # returns True
-        self.observers[User].object(mario).is_updated # returns False
-        self.observers[User].object(mario).is_deleted # returns False
+        # you can use `instance(model_instance)` method to see what happened to the instance given
+        self.observers[User].instance(mario).is_created # returns True
+        self.observers[User].instance(mario).is_updated # returns False
+        self.observers[User].instance(mario).is_deleted # returns False
 
         # an alternative manner to access the observer: the property `modelname_observer` lowercased
         self.user_observer.number_of_objects_created # returns 1 (mario)
