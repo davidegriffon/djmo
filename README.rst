@@ -1,5 +1,5 @@
-dj-model-observer
------------------
+Django Model Observer
+---------------------
 
 Note: beta version
 
@@ -33,25 +33,27 @@ Other example:
         wario.email = 'wario@example.com'
         wario.save()
 
-        # then you can test using observer, using for example
-        self.observers[User].number_of_objects_created # return 1 (mario)
-        self.observers[User].number_of_objects_updated # return 1 (wario)
-        self.observers[User].number_of_objects_deleted # return 0
-        self.observers[User].nothing_has_changed # return False
+        # then you can use User's observer
+        self.observers[User].number_of_objects_created # returns 1 (mario)
+        self.observers[User].number_of_objects_updated # returns 1 (wario)
+        self.observers[User].number_of_objects_deleted # returns 0
 
         # you can use `object(model_instance)` method to see what happened to the instance given
-        self.observers[User].object(mario).is_created # return True
-        self.observers[User].object(mario).is_updated # return False
-        self.observers[User].object(mario).is_deleted # return False
-        self.observers[User].object(mario).is_untouched # return False
+        self.observers[User].object(mario).is_created # returns True
+        self.observers[User].object(mario).is_updated # returns False
+        self.observers[User].object(mario).is_deleted # returns False
 
         # an alternative manner to access the observer: the property `modelname_observer` lowercased
-        self.user_observer.number_of_objects_created # return 1 (mario)
+        self.user_observer.number_of_objects_created # returns 1 (mario)
 
         # or, if you have only one model observed
-        self.observer.number_of_objects_created # return 1 (mario)
+        self.observer.number_of_objects_created # returns 1 (mario)
 
-    # you can attach more observers:
+
+You can attach more observers:
+
+.. code:: python
+
     @observe_models(User, Group, Foo)
     def test_bar(self):
         # the access observer with
@@ -59,3 +61,28 @@ Other example:
         # or
         self.group_observer
         # etc
+
+You can also observe specific instances:
+
+.. code:: python
+
+    @observe_models(SoccerPlayer)
+    def test_instance_delta(self):
+        mario_rossi = SoccerPlayer.objects.get(last_name='Rossi')
+        # use method `observe_instances` to start observing an instance
+        self.observers[SoccerPlayer].observe_instances(mario_rossi)
+
+        # some operation on Mario Rossi
+        mario_rossi.last_name = "Arancioni"
+        mario_rossi.save()
+
+        # then you can see what happened to the instance since now
+        # `delta` property return a dict
+        self.observers[SoccerPlayer].instance(mario_rossi).delta # return {'last_name': 'Arancioni'}
+
+        # you can also use `assertDelta` to check what's changed
+        self.observers[SoccerPlayer].assertDelta(mario_rossi, {'last_name': 'Arancioni'})
+
+        # other useful properties
+        self.observers[SoccerPlayer].instance(mario_rossi).is_updated  # returns True
+        self.observers[SoccerPlayer].instance(mario_rossi).is_deleted  # returns False

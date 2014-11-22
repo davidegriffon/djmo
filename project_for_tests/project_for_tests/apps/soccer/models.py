@@ -12,8 +12,14 @@ class SoccerTeam(models.Model):
     def all_players(self):
         return SoccerPlayer.objects.filter(team=self)
 
+    def __str__(self):
+        return "<SoccerTeam `{}`>".format(self.name)
+
 
 class SoccerPlayer(models.Model):
     team = models.ForeignKey(SoccerTeam)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return "<SoccerPlayer `{} {}`>".format(self.first_name, self.last_name)
