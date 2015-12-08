@@ -19,6 +19,8 @@ To install djmo, simply:
 Examples
 --------
 
+Djmo provides the `observe_models` decorator that can be used to know what's happening to yours models inside the decorated function.
+
 .. code:: python
 
     @observe_models(YourModel)
