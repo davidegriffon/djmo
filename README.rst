@@ -1,13 +1,23 @@
 Django Model Observer
----------------------
-
-Note: beta version
+=====================
 
 Simple Django plugin that provides some goodies useful to know what's happening in your database.
 It can be useful in tests, for example when you use one function with side effects.
 With observe_models decorator you attach observers you want, and use later to see what happened in your DB.
 
-Example:
+
+Installation
+------------
+
+To install djmo, simply:
+
+.. code-block:: bash
+
+    $ pip install djmo
+
+
+Examples
+--------
 
 .. code:: python
 
@@ -88,6 +98,15 @@ You can also observe specific instances:
         self.observers[SoccerPlayer].instance(mario_rossi).is_deleted  # returns False
 
 
-## Tests
+Tests
+-----
 
 To run tests go in the `tests` folder, then `export DJANGO_SETTINGS_MODULE=project_for_tests.settings` and `python manage.py test`
+
+
+Next version
+------------
+
+* documentation
+* `with` statement
+* add receiver to signal `m2m_changed`
