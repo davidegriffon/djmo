@@ -45,6 +45,15 @@ class SoccerTestCase(TestCase):
         self.assertFalse(self.observers[SoccerPlayer].nothing_has_changed)
 
     @observe_models(SoccerPlayer)
+    def test_reset_method(self):
+        # print(self._testMethodName, "test_crud_actions_should_be_traced -->", id(self.observers[SoccerPlayer]), threading.current_thread())
+        self.perform_some_actions()
+        self.observers[SoccerPlayer].reset()
+        self.assertEqual(0, self.observers[SoccerPlayer].number_of_objects_created)
+        self.assertEqual(0, self.observers[SoccerPlayer].number_of_objects_updated)
+        self.assertEqual(0, self.observers[SoccerPlayer].number_of_objects_deleted)
+
+    @observe_models(SoccerPlayer)
     def test_property_observer(self):
         # print(self._testMethodName, "test_property_observer -->", id(self.observers[SoccerPlayer]), threading.current_thread())
         self.perform_some_actions()
@@ -72,35 +81,7 @@ class SoccerTestCase(TestCase):
         self.assertEqual(1, self.observers[SoccerTeam].number_of_objects_deleted)
 
     @observe_models(SoccerPlayer)
-    def test_instance_delta(self):
-        mario_rossi = SoccerPlayer.objects.get(last_name='Rossi')
-        mario_verdi = SoccerPlayer.objects.get(last_name='Verdi')
-        self.observers[SoccerPlayer].observe_instances(mario_rossi, mario_verdi)
-
-        # some operation on Mario Rossi
-        mario_rossi.last_name = "Arancioni"
-        mario_rossi.save()
-        self.assertDictEqual({'last_name': 'Arancioni'}, self.observers[SoccerPlayer].instance(mario_rossi).delta)
-        mario_rossi.first_name = "Giulio"
-        mario_rossi.save()
-        self.assertDictEqual({'last_name': 'Arancioni', 'first_name': 'Giulio'}, self.observers[SoccerPlayer].instance(mario_rossi).delta)
-        self.assertTrue(self.observers[SoccerPlayer].instance(mario_rossi).is_updated)
-        self.assertFalse(self.observers[SoccerPlayer].instance(mario_rossi).is_deleted)
-
-        # check assertRaises method
-        self.observers[SoccerPlayer].assertDelta(mario_rossi, {'last_name': 'Arancioni', 'first_name': 'Giulio'})
-        self.assertRaises(AssertionError, self.observers[SoccerPlayer].assertDelta, mario_rossi, {'foo': 'bar'})
-
-        # some operation on Mario Verdi
-        self.assertDictEqual({}, self.observers[SoccerPlayer].instance(mario_verdi).delta)
-        self.assertFalse(self.observers[SoccerPlayer].instance(mario_verdi).is_updated)
-        self.assertFalse(self.observers[SoccerPlayer].instance(mario_verdi).is_deleted)
-        mario_verdi.delete()
-        self.assertTrue(self.observers[SoccerPlayer].instance(mario_verdi).is_deleted)
-
-
-    @observe_models(SoccerPlayer)
-    def test_object_method(self):
+    def test_observer_properties(self):
         # print(self._testMethodName, "test_object_method -->", id(self.observers[SoccerPlayer]), threading.current_thread())
         # only created
         mario_neri = SoccerPlayer.objects.create(team=self.dream_team, first_name='Mario', last_name='Neri')
@@ -141,3 +122,36 @@ class SoccerTestCase(TestCase):
         self.assertFalse(self.observers[SoccerPlayer].instance(mario_rosa).is_created)
         self.assertFalse(self.observers[SoccerPlayer].instance(mario_rosa).is_updated)
         self.assertFalse(self.observers[SoccerPlayer].instance(mario_rosa).is_deleted)
+
+    @observe_models(SoccerPlayer)
+    def test_assertDelta_method(self):
+        mario_rossi = SoccerPlayer.objects.get(last_name='Rossi')
+        mario_verdi = SoccerPlayer.objects.get(last_name='Verdi')
+        self.observers[SoccerPlayer].observe_instances(mario_rossi, mario_verdi)
+
+        # some operation on Mario Rossi
+        mario_rossi.last_name = "Arancioni"
+        mario_rossi.save()
+        self.assertDictEqual({'last_name': 'Arancioni'}, self.observers[SoccerPlayer].instance(mario_rossi).delta)
+        mario_rossi.first_name = "Giulio"
+        mario_rossi.save()
+        self.assertDictEqual({'last_name': 'Arancioni', 'first_name': 'Giulio'}, self.observers[SoccerPlayer].instance(mario_rossi).delta)
+        self.assertTrue(self.observers[SoccerPlayer].instance(mario_rossi).is_updated)
+        self.assertFalse(self.observers[SoccerPlayer].instance(mario_rossi).is_deleted)
+
+        # check assertRaises method
+        self.observers[SoccerPlayer].assertDelta(mario_rossi, {'last_name': 'Arancioni', 'first_name': 'Giulio'})
+        self.assertRaises(AssertionError, self.observers[SoccerPlayer].assertDelta, mario_rossi, {'foo': 'bar'})
+
+        # some operation on Mario Verdi
+        self.assertDictEqual({}, self.observers[SoccerPlayer].instance(mario_verdi).delta)
+        self.assertFalse(self.observers[SoccerPlayer].instance(mario_verdi).is_updated)
+        self.assertFalse(self.observers[SoccerPlayer].instance(mario_verdi).is_deleted)
+        mario_verdi.delete()
+        self.assertTrue(self.observers[SoccerPlayer].instance(mario_verdi).is_deleted)
+
+    @observe_models(SoccerPlayer)
+    def test_assertModelIsUntouched_method(self):
+        self.observers[SoccerPlayer].assertModelIsUntouched()  # check that this method does not raise an error
+        self.perform_some_actions()
+        self.assertRaises(Exception, self.observers[SoccerPlayer].assertModelIsUntouched)

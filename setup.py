@@ -1,29 +1,22 @@
-"""
-
-"""
-
 from setuptools import setup
 
 setup(
-    name='dj-model-observer',
+    name='djmo',
+    description='Django Model Observer',
     version='0.0.1',
     url='https://github.com/griffosx/dj-model-observer',
-    license='MIT',
-    author='Davide Griffon',
+    author='Davide Giuseppe Griffon',
     author_email='davide.griffon@gmail.com',
-    description='',
-    long_description=__doc__,
-    py_modules=['dj_model_observer'],
-    zip_safe=False,
-    include_package_data=True,
-    platforms='any',
+    license='MIT',
+    packages=['djmo'],
+    install_requires=['django'],
+    keywords='django test utility',
     classifiers=[
-        'Environment :: Web Environment',
-        'Intended Audience :: Developers',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
-        'Topic :: Software Development :: Libraries :: Python Modules'
-    ]
+        'Development Status :: 4 - Beta',
+        'Framework :: Django',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3 :: Only',
+        'Topic :: Software Development :: Testing',
+    ],
+    zip_safe=False,
 )

@@ -86,3 +86,8 @@ You can also observe specific instances:
         # other useful properties
         self.observers[SoccerPlayer].instance(mario_rossi).is_updated  # returns True
         self.observers[SoccerPlayer].instance(mario_rossi).is_deleted  # returns False
+
+
+## Tests
+
+To run tests go in the `tests` folder, then `export DJANGO_SETTINGS_MODULE=project_for_tests.settings` and `python manage.py test`

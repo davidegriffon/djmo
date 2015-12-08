@@ -1,11 +1,6 @@
-# -*- coding: utf-8 -*-
-from functools import wraps
-from django.core import serializers
 from django.db.models.signals import post_save, post_delete
+from django.core import serializers
 
-
-# TODO
-# `with` statement
 
 class ModelInstancePatched(object):
     def __init__(self, instance_pk, is_created, is_updated, is_deleted):
@@ -19,7 +14,8 @@ class ModelInstanceObserved(object):
     def __init__(self, instance):
         self.model = type(instance)
         self.pk = instance.pk
-        self.field_set = {(k, v) for k, v in serializers.serialize('python', [instance])[0]['fields'].items()}
+        self.field_set = {(k, tuple(v)) if isinstance(v, list) else (k, v)
+                          for k, v in serializers.serialize('python', [instance])[0]['fields'].items()}
 
     @property
     def delta(self):
@@ -30,7 +26,8 @@ class ModelInstanceObserved(object):
         return {t[0]: t[1] for t in delta_elements}
 
     def assert_delta_is_equal_to(self, expected_delta_dict):
-        expected_delta = {(k, v) for k, v in expected_delta_dict.items()}
+        expected_delta = {(k, tuple(v)) if isinstance(v, list) else (k, v)
+                          for k, v in expected_delta_dict.items()}
         current_instance = ModelInstanceObserved(self.model.objects.get(pk=self.pk))
         # difference between two sets with - operator
         delta = current_instance.field_set - self.field_set
@@ -84,6 +81,12 @@ class Observer(object):
             self.number_of_objects_updated + \
             self.number_of_objects_deleted == 0
 
+    def reset(self):
+        """reset all internal counters"""
+        self.instances_created = []
+        self.instances_updated = []
+        self.instances_deleted = []
+
     def observe_instance(self, instance):
         if self.model is not type(instance):
             raise ValueError("instance must be an instance of `{}`".format(self.model))
@@ -93,14 +96,7 @@ class Observer(object):
         for instance in instances:
             self.observe_instance(instance)
 
-    def assertDelta(self, instance, delta):
-        if self.model is not type(instance):
-            raise ValueError("instance must be an instance of `{}`".format(self.model))
-        if instance.pk not in self.observed_instances:
-            raise ValueError('instance must be an observed instance')
-        self.observed_instances[instance.pk].assert_delta_is_equal_to(delta)
-
-    def monkey_patch_test(self, test):
+    def monkey_patch_observer(self, test):
         """
         Add to the test method a property to access the observer easily.
         """
@@ -110,7 +106,7 @@ class Observer(object):
     def instance(self, inst):
         """
         :return
-            an sintace of ModelInstanceObserved if `inst` is observed
+            an instance of ModelInstanceObserved if `inst` is observed
             an instance of ModelInstancePatched if `inst` is NOT observed
         """
         instance_pk = inst.pk or getattr(inst, '_old_id', None)
@@ -144,36 +140,14 @@ class Observer(object):
         self.instances_deleted.append(instance.pk)
         instance._old_id = instance.pk
 
+    def assertDelta(self, instance, delta):
+        if self.model is not type(instance):
+            raise ValueError("instance must be an instance of `{}`".format(self.model))
+        if instance.pk not in self.observed_instances:
+            raise ValueError('instance must be an observed instance')
+        self.observed_instances[instance.pk].assert_delta_is_equal_to(delta)
 
-def observe_models(*models):
-    """
-    Decorator used to add model observers to function/method decorated
-    :param models: the models to be observed
-    """
-    def decorator(observed_method):
-        @wraps(observed_method)
-        def wrapper(this, *args, **kwargs):
-            this.observers = dict()
-            # connect signals
-            for model in models:
-                observer = Observer(model)
-                observer.connect()
-                this.observers[model] = observer
-                # add this.modelname_observer property
-                observer.monkey_patch_test(this)
-            # add default observer
-            if len(models) == 1:
-                this.observer = this.observers[models[0]]
-
-            try:
-                # execute test itself
-                observed_method(this, *args, **kwargs)
-            except Exception:
-                raise
-            finally:
-                # disconnect all signals in any case
-                for observer in this.observers.values():
-                    observer.disconnect()
-
-        return wrapper
-    return decorator
+    def assertModelIsUntouched(self):
+        assert self.number_of_objects_created == 0
+        assert self.number_of_objects_updated == 0
+        assert self.number_of_objects_deleted == 0
