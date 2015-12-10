@@ -1,5 +1,5 @@
 from functools import wraps
-from .observer import Observer
+from .observer import Observer, ObserversList
 
 
 def observe_models(*models):
@@ -10,8 +10,7 @@ def observe_models(*models):
     def decorator(observed_method):
         @wraps(observed_method)
         def wrapper(this, *args, **kwargs):
-            # TODO use a class acting like a dict (to add method `reset` and property `nothing_has_changed`)
-            this.observers = dict()
+            this.observers = ObserversList()
             # connect signals
             for model in models:
                 observer = Observer(model)
@@ -37,8 +36,6 @@ def observe_models(*models):
     return decorator
 
 
-# TODO self.observers.reset()
-# TODO self.observers.nothing_has_changed
 # TODO self.observers.assertNothingHasChanged
 # TODO with statement
 # TODO add receiver to signal `m2m_changed`

@@ -1,9 +1,15 @@
+import sys
+import os
 from django.test import TestCase
-from djmo import observe_models
 from .models import SoccerTeam, SoccerPlayer
+from django.conf import settings
+# add dynamically djmo to PYTHONPATH
+djmo_root = settings.BASE_DIR[:settings.BASE_DIR.rfind("{}djmo".format(os.sep))]
+sys.path.insert(0, djmo_root)
+from djmo import observe_models
 
 
-class SoccerTestCase(TestCase):
+class BaseTestCase(TestCase):
 
     def setUp(self):
         teams = [
@@ -34,6 +40,10 @@ class SoccerTestCase(TestCase):
         p2.save()
         # deletion not affect `number_of_objects_created`
         p3.delete()
+
+
+class ObserverTestCase(BaseTestCase):
+    """tests for class Observer"""
 
     @observe_models(SoccerPlayer)
     def test_crud_actions_should_be_traced(self):
@@ -155,3 +165,14 @@ class SoccerTestCase(TestCase):
         self.observers[SoccerPlayer].assertModelIsUntouched()  # check that this method does not raise an error
         self.perform_some_actions()
         self.assertRaises(Exception, self.observers[SoccerPlayer].assertModelIsUntouched)
+
+
+class ObserversListTestCase(BaseTestCase):
+    """tests for class ObserversList"""
+
+    @observe_models(SoccerPlayer, SoccerTeam)
+    def test_reset_and_nothing_has_changed_method(self):
+        self.perform_some_actions()
+        self.assertFalse(self.observers.nothing_has_changed)
+        self.observers.reset()
+        self.assertTrue(self.observers.nothing_has_changed)

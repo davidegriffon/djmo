@@ -141,6 +141,7 @@ class Observer(object):
         instance._old_id = instance.pk
 
     def assertDelta(self, instance, delta):
+        # TODO better logging in case of failure
         if self.model is not type(instance):
             raise ValueError("instance must be an instance of `{}`".format(self.model))
         if instance.pk not in self.observed_instances:
@@ -148,6 +149,41 @@ class Observer(object):
         self.observed_instances[instance.pk].assert_delta_is_equal_to(delta)
 
     def assertModelIsUntouched(self):
+        # TODO better logging in case of failure
         assert self.number_of_objects_created == 0
         assert self.number_of_objects_updated == 0
         assert self.number_of_objects_deleted == 0
+
+
+class ObserversList():
+    # TODO add documentation of methods `reset` and `nothing_has_changed`
+
+    def __init__(self):
+        self._observers = dict()
+
+    def __getitem__(self, key):
+        return self._observers[key]
+
+    def __setitem__(self, key, value):
+        self._observers[key] = value
+
+    def keys(self):
+        return self._observers.keys()
+
+    def values(self):
+        return self._observers.values()
+
+    def reset(self):
+        """reset all observers at one time"""
+        for observer in self._observers.values():
+            observer.reset()
+
+    @property
+    def nothing_has_changed(self):
+        """
+        :return True if and only if all observed models remained untouched
+        """
+        for observer in self._observers.values():
+            if not observer.nothing_has_changed:
+                return False
+        return True
