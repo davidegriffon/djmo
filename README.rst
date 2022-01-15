@@ -1,3 +1,7 @@
+Disclamer
+=====================
+This is an old unmaintained repository! I initially created this project because I wanted an easier way to write (model) tests for Django projects. TL;DR: I stopped using Django and for this reason, I'm not maintaining this codebase.
+
 Django Model Observer
 =====================
 
